@@ -9,82 +9,77 @@
 #include "semphr.h"
 #include "task.h"
 
-/* #include "TUM_Ball.h" */
-/* #include "TUM_Draw.h" */
-/* #include "TUM_Font.h" */
-/* #include "TUM_Event.h" */
-/* #include "TUM_Sound.h" */
-/* #include "TUM_Utils.h" */
-#include "TUM_FreeRTOS_Utils.h"
-/* #include "TUM_Print.h" */
 
-/* #include "AsyncIO.h" */
 
-#define mainGENERIC_PRIORITY (tskIDLE_PRIORITY)
-#define mainGENERIC_STACK_SIZE ((unsigned short)2560)
-#define mainTask1_PRIORITY (3)
-#define mainTask2_PRIORITY (2)
-#define mainTask3_PRIORITY (1)
 
-static TaskHandle_t Task1 = NULL;
-static TaskHandle_t Task2 = NULL;
-static TaskHandle_t Task3 = NULL;
-const portTickType xPeriod1 = 1000;
-const portTickType xPeriod2 = 5000;
-const portTickType xPeriod3 = 10000;
-
-void vTaskBody1(void *pvParameters)
+void controlTask(void *pParam)
 {
-    portTickType xLastWakeTime;
-    while (1) {
-        xLastWakeTime = xTaskGetTickCount();
-        // Basic sleep of 1000 milliseconds
-        /* vTaskDelay((TickType_t)1000); */
-        printf("Task 1\n");
-        vTaskDelayUntil(&xLastWakeTime, xPeriod1);
-    }
+	portTickType xLastWakeTime;
+	const portTickType xFrequency = 10;
+	xLastWakeTime=xTaskGetTickCount();
+	
+	printf("-----Starting control task------\n");	
+
+	for( ;; )
+	{	
+		int i;
+
+		for(;;) {
+		}
+		
+		//vTaskDelayUntil(&xLastWakeTime, xFrequency);
+	}
 }
 
-void vTaskBody2(void *pvParameters)
-{
-    portTickType xLastWakeTime;
-    while (1) {
-        xLastWakeTime = xTaskGetTickCount();
-        // Basic sleep of 1000 milliseconds
-        /* vTaskDelay((TickType_t)1000); */
-        printf("Task 2\n");
-        /* tumFUtilPrintTaskStateList(); */
-        /* tumFUtilPrintTaskUtils(); */
-        vTaskDelayUntil(&xLastWakeTime, xPeriod2);
-    }
+void timingTask(void *pParam)
+{	
+	portTickType xLastWakeTime;
+	const portTickType xFrequency = 150;
+	xLastWakeTime=xTaskGetTickCount();
+
+	
+	
+	printf("-----Starting timing task------\n");
+
+		
+	for( ;; )
+	{	
+		int i;
+
+		for(i=0; i<10; i++) {
+			printf("Interrupt\n");
+		}
+
+		printf("-----Change Prio------\n");
+
+
+		vTaskDelayUntil(&xLastWakeTime, xFrequency);
+	}	
 }
 
-void vTaskBody3(void *pvParameters)
-{
-    portTickType xLastWakeTime;
-    while (1) {
-        xLastWakeTime = xTaskGetTickCount();
-        // Basic sleep of 1000 milliseconds
-        /* vTaskDelay((TickType_t)1000); */
-        printf("Task 3\n");
-        /* tumFUtilPrintTaskStateList(); */
-        /* tumFUtilPrintTaskUtils(); */
-        vTaskDelayUntil(&xLastWakeTime, xPeriod3);
-    }
-}
+
+#define PRINT_TASK_ERROR(task) PRINT_ERROR("Failed to print task ##task");
 
 int main(int argc, char *argv[])
 {
-    xTaskCreate(vTaskBody1, "Task1", mainGENERIC_STACK_SIZE * 2, NULL,
-                    mainTask1_PRIORITY, &Task1); 
-    xTaskCreate(vTaskBody2, "Task2", mainGENERIC_STACK_SIZE * 2, NULL,
-                    mainTask2_PRIORITY, &Task2); 
-    xTaskCreate(vTaskBody3, "Task3", mainGENERIC_STACK_SIZE * 2, NULL,
-                    mainTask3_PRIORITY, &Task3); 
-    vTaskStartScheduler();
+    printf("-----Creating tasks------\n");
+			
+	xTaskCreate(timingTask, "Timing Task", 128, NULL, 5, NULL);
+	xTaskCreate(controlTask, "Control Task", 128, NULL, 3, NULL);
+	
+	printf("-----Starting scheduler------\n");
+	
+	/* Start the scheduler to start the tasks executing. */
+	vTaskStartScheduler();
 
-    return EXIT_SUCCESS;
+	/* The following line should never be reached because vTaskStartScheduler() 
+	will only return if there was not enough FreeRTOS heap memory available to
+	create the Idle and (if configured) Timer tasks.  Heap management, and
+	techniques for trapping heap exhaustion, are described in the book text. */
+	for( ;; );
+	return 0;
 }
+
 
 // cppcheck-suppress unusedFunction
 __attribute__((unused)) void vMainQueueSendPassed(void)
